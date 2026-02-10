@@ -22,14 +22,16 @@ export const getUsuarios = async (
   size: number,
   sort: string,
   sortDirection: string,
-  tipo: string | null = null
+  tipo: string | null = null,
+  filters: any | null = null
 ): Promise<ApiResponse<PagedUsuarioResponse>> => {
   const _sort = sort !== '' ? `&sort=${sort}` : '';
   const _sortDirection = sortDirection !== '' ? `&sortDirection=${sortDirection}` : '';
   const _type = tipo ? `&tipo=${tipo}` : '';
   const response = await request<PagedUsuarioResponse>(
-    'GET',
-    `api/usuario?page=${page}&size=${size}${_sort}${_sortDirection}${_type}`
+    'POST',
+    `api/usuario?page=${page}&size=${size}${_sort}${_sortDirection}${_type}`,
+    filters
   );
 
   if (!response.isSuccess) {

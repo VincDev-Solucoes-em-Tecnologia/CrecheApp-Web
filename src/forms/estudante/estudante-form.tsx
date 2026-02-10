@@ -80,8 +80,8 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
 
   useEffect(() => {
     if (open) {
-      getSalas(1, 100, 'nome', 'asc').then((r) => setSalas(r.data || []));
-      getUsuarios(1, 100, 'nome', 'asc', 'Pai').then((r) => setPais(r.data?.items || []));
+      getSalas(1, 1000, 'nome', 'asc').then((r) => setSalas(r.data || []));
+      getUsuarios(1, 1000, 'nome', 'asc', 'Pai').then((r) => setPais(r.data?.items || []));
     }
   }, [open]);
 

@@ -1,6 +1,12 @@
 import type { AlertColor } from '@mui/material';
 import type { UsuarioResponse, PagedUsuarioResponse } from 'src/models/user/usuario-response';
-import type { GridSlots, GridColDef, GridSortModel, GridPaginationModel } from '@mui/x-data-grid';
+import type {
+  GridSlots,
+  GridColDef,
+  GridSortModel,
+  GridPaginationModel,
+  GridFilterModel,
+} from '@mui/x-data-grid';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -38,8 +44,10 @@ export function UserView() {
 
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
-    pageSize: 10,
+    pageSize: 50,
   });
+
+  const [filterModel, setFilterModel] = useState<GridFilterModel>();
 
   const [notification, setNotification] = useState<{
     open: boolean;
@@ -67,8 +75,13 @@ export function UserView() {
   };
 
   const columns: GridColDef<UsuarioResponse>[] = [
-    { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 150 },
-    { field: 'sobrenome', headerName: 'Sobrenome', flex: 1, minWidth: 150 },
+    {
+      field: 'nome',
+      headerName: 'Nome',
+      flex: 1,
+      minWidth: 150,
+      valueGetter: (value, row) => `${row.nome} ${row.sobrenome}`,
+    },
     { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
     { field: 'cidade', headerName: 'Cidade', width: 150 },
     { field: 'estado', headerName: 'Estado', width: 150 },
@@ -80,6 +93,7 @@ export function UserView() {
       headerName: 'Tipo',
       width: 120,
       sortable: false,
+      filterable: false,
       valueGetter: (value, row) => (row.tipo === 'Pai' ? 'Responsável' : row.tipo),
     },
     {
@@ -105,7 +119,9 @@ export function UserView() {
       paginationModel.page + 1,
       paginationModel.pageSize,
       sortModel.length > 0 ? sortModel[0].field : '',
-      sortModel.length > 0 ? sortModel[0].sort! : ''
+      sortModel.length > 0 ? sortModel[0].sort! : '',
+      null,
+      filterModel?.items
     )
       .then((r) => {
         setUsers(r.data ? r.data : ({} as PagedUsuarioResponse));
@@ -114,7 +130,7 @@ export function UserView() {
         setNotification({ open: true, message: e.message, severity: 'error' });
       })
       .finally(() => setIsLoading(false));
-  }, [paginationModel, sortModel]);
+  }, [paginationModel, sortModel, filterModel]);
 
   useEffect(() => {
     getData();
@@ -146,6 +162,9 @@ export function UserView() {
         paginationMode="server"
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}
+        filterMode="server"
+        filterModel={filterModel}
+        onFilterModelChange={setFilterModel}
         pageSizeOptions={[5, 10, 25, 50]}
         sortingMode="server"
         onSortModelChange={setSortModel}
@@ -164,7 +183,6 @@ export function UserView() {
           columns: {
             columnVisibilityModel: {
               estado: false,
-              bairro: false,
               numero: false,
             },
           },
@@ -173,7 +191,10 @@ export function UserView() {
 
       <UserFormDialog
         open={openForm}
-        onClose={() => setOpenForm(false)}
+        onClose={() => {
+          setOpenForm(false);
+          setUserSelected(null);
+        }}
         currentUser={
           userSelected
             ? {
@@ -189,6 +210,7 @@ export function UserView() {
             message: `Usuário ${userSelected ? 'editado' : 'criado'} com sucesso!`,
             severity: 'success',
           });
+          setUserSelected(null);
         }}
       />
 
@@ -198,16 +220,23 @@ export function UserView() {
         severity={notification.severity}
         onClose={handleCloseNotification}
       />
+
       <DialogDelete
         open={openModalDelete}
-        onClose={() => setOpenModalDelete(false)}
+        onClose={() => {
+          setOpenModalDelete(false);
+          setUserSelected(null);
+        }}
         onAfirmative={() => {
           remover('usuario', userSelected!.id!)
             .then(() => getData())
             .catch((e) => {
               setNotification({ open: true, message: e.message, severity: 'error' });
             })
-            .finally(() => setOpenModalDelete(false));
+            .finally(() => {
+              setOpenModalDelete(false);
+              setUserSelected(null);
+            });
         }}
       />
     </DashboardContent>

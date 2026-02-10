@@ -9,13 +9,15 @@ export const getEstudantes = async (
   page: number,
   size: number,
   sort: string,
-  sortDirection: string
+  sortDirection: string,
+  filters: any | null = null
 ): Promise<ApiResponse<PagedEstudanteResponse>> => {
   const _sort = sort !== '' ? `&sort=${sort}` : '';
   const _sortDirection = sortDirection !== '' ? `&sortDirection=${sortDirection}` : '';
   const response = await request<PagedEstudanteResponse>(
-    'GET',
-    `${BASE_URL}?page=${page}&size=${size}${_sort}${_sortDirection}`
+    'POST',
+    `${BASE_URL}/all/?page=${page}&size=${size}${_sort}${_sortDirection}`,
+    filters
   );
 
   if (!response.isSuccess) {

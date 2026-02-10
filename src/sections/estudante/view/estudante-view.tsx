@@ -1,9 +1,15 @@
 import type { AlertColor } from '@mui/material';
-import type { GridSlots, GridColDef, GridSortModel, GridPaginationModel } from '@mui/x-data-grid';
 import type {
   EstudanteResponse,
   PagedEstudanteResponse,
 } from 'src/models/estudante/estudante-reponse';
+import type {
+  GridSlots,
+  GridColDef,
+  GridSortModel,
+  GridFilterModel,
+  GridPaginationModel,
+} from '@mui/x-data-grid';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -36,8 +42,10 @@ export function EstudanteView() {
   const [openModalDelete, setOpenModalDelete] = useState(false);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
-    pageSize: 10,
+    pageSize: 50,
   });
+
+  const [filterModel, setFilterModel] = useState<GridFilterModel>();
 
   const [notification, setNotification] = useState<{
     open: boolean;
@@ -53,8 +61,12 @@ export function EstudanteView() {
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
 
   const columns: GridColDef<EstudanteResponse>[] = [
-    { field: 'nome', headerName: 'Nome', flex: 1 },
-    { field: 'sobrenome', headerName: 'Sobrenome', flex: 1 },
+    {
+      field: 'nome',
+      headerName: 'Nome',
+      flex: 1,
+      valueGetter: (value, row) => `${row.nome} ${row.sobrenome}`,
+    },
     {
       field: 'dataNascimento',
       headerName: 'Data Nascimento',
@@ -64,6 +76,7 @@ export function EstudanteView() {
         return new Date(value).toLocaleDateString('pt-BR');
       },
       sortable: false,
+      filterable: false,
     },
     { field: 'nomePediatra', headerName: 'Pediatra', flex: 1 },
     { field: 'planoDeSaude', headerName: 'Plano de saúde', flex: 1 },
@@ -79,6 +92,7 @@ export function EstudanteView() {
       flex: 1.5,
       minWidth: 250,
       sortable: false,
+      filterable: false,
       valueGetter: (value, row) => {
         if (!row.paisResponsaveis || row.paisResponsaveis.length === 0) return '';
         return row.paisResponsaveis.map((p) => `${p.nome}`).join(', ');
@@ -106,11 +120,12 @@ export function EstudanteView() {
       paginationModel.page + 1,
       paginationModel.pageSize,
       sortModel.length > 0 ? sortModel[0].field : '',
-      sortModel.length > 0 ? sortModel[0].sort! : ''
+      sortModel.length > 0 ? sortModel[0].sort! : '',
+      filterModel?.items
     )
       .then((r) => setEstudantes(r.data ? r.data : ({} as PagedEstudanteResponse)))
       .finally(() => setIsLoading(false));
-  }, [paginationModel, sortModel]);
+  }, [paginationModel, sortModel, filterModel]);
 
   useEffect(() => {
     getData();
@@ -153,15 +168,13 @@ export function EstudanteView() {
         rows={estudantes.items}
         columns={columns}
         loading={isLoading}
+        density="compact"
         paginationMode="server"
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}
-        disableRowSelectionOnClick
-        sx={{
-          border: 'none',
-          '& .MuiDataGrid-cell': { borderBottom: '1px dashed #F1F3F4' },
-        }}
-        density="compact"
+        filterMode="server"
+        filterModel={filterModel}
+        onFilterModelChange={setFilterModel}
         pageSizeOptions={[5, 10, 25, 50]}
         sortingMode="server"
         onSortModelChange={setSortModel}
@@ -170,14 +183,30 @@ export function EstudanteView() {
         }}
         rowCount={estudantes.totalItems ? estudantes.totalItems : 0}
         showToolbar
+        disableRowSelectionOnClick
         localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
+        sx={{
+          border: 'none',
+          '& .MuiDataGrid-cell': { borderBottom: '1px dashed #F1F3F4' },
+        }}
       />
 
       <EstudanteFormDialog
         open={openForm}
-        onClose={() => setOpenForm(false)}
+        onClose={() => {
+          setOpenForm(false);
+          setSelected(null);
+        }}
         currentData={selected}
-        onSuccess={getData}
+        onSuccess={() => {
+          getData();
+          setNotification({
+            open: true,
+            message: `Criança ${selected ? 'editada' : 'criada'} com sucesso!`,
+            severity: 'success',
+          });
+          setSelected(null);
+        }}
       />
 
       <DefaultSnackBar
@@ -186,16 +215,23 @@ export function EstudanteView() {
         severity={notification.severity}
         onClose={handleCloseNotification}
       />
+
       <DialogDelete
         open={openModalDelete}
-        onClose={() => setOpenModalDelete(false)}
+        onClose={() => {
+          setOpenModalDelete(false);
+          setSelected(null);
+        }}
         onAfirmative={() => {
           remover('estudante', selected!.id!)
             .then(() => getData())
             .catch((e) => {
               setNotification({ open: true, message: e.message, severity: 'error' });
             })
-            .finally(() => setOpenModalDelete(false));
+            .finally(() => {
+              setOpenModalDelete(false);
+              setSelected(null);
+            });
         }}
       />
     </DashboardContent>

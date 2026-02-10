@@ -37,7 +37,7 @@ export function SalaView() {
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
-    pageSize: 10,
+    pageSize: 50,
   });
 
   const [notification, setNotification] = useState<{
@@ -167,7 +167,10 @@ export function SalaView() {
 
       <SalaFormDialog
         open={openForm}
-        onClose={() => setOpenForm(false)}
+        onClose={() => {
+          setOpenForm(false);
+          setSalaSelected(null);
+        }}
         currentData={salaSelected}
         onSuccess={() => {
           getData();
@@ -176,6 +179,7 @@ export function SalaView() {
             message: `Sala ${salaSelected ? 'editada' : 'criada'} com sucesso!`,
             severity: 'success',
           });
+          setSalaSelected(null);
         }}
       />
 
@@ -188,7 +192,10 @@ export function SalaView() {
 
       <DialogDelete
         open={openModalDelete}
-        onClose={() => setOpenModalDelete(false)}
+        onClose={() => {
+          setOpenModalDelete(false);
+          setSalaSelected(null);
+        }}
         onAfirmative={() => {
           if (!salaSelected?.id) return;
           removerSala(salaSelected.id)
@@ -196,7 +203,10 @@ export function SalaView() {
             .catch((e) => {
               setNotification({ open: true, message: e.message, severity: 'error' });
             })
-            .finally(() => setOpenModalDelete(false));
+            .finally(() => {
+              setOpenModalDelete(false);
+              setSalaSelected(null);
+            });
         }}
       />
     </DashboardContent>

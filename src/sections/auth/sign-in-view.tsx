@@ -13,6 +13,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import { useRouter } from 'src/routes/hooks';
 
 import { CONFIG } from 'src/config-global';
+import { getUsuarioInfo } from 'src/services/usuario-service';
 import { auth, appleProvider, googleProvider, microsoftProvider } from 'src/lib/firebase';
 
 import { Logo } from 'src/components/logo';
@@ -40,7 +41,6 @@ export function SignInView() {
 
       const idToken = await user.getIdToken();
       localStorage.setItem('accessToken', idToken);
-
       router.push('/');
     } catch (err: any) {
       switch (err.code) {
@@ -67,7 +67,15 @@ export function SignInView() {
       const userCredential = await signInWithPopup(auth, provider);
       const token = await userCredential.user.getIdToken();
       localStorage.setItem('accessToken', token);
-      router.push('/');
+      getUsuarioInfo()
+        .then((r) => {
+          if (r.data?.tipo == 'Admin') {
+            router.push('/');
+          } else {
+            setError('Usuário sem permissão para acessar essa página');
+          }
+        })
+        .catch((e) => setError(e.message || 'Validação do seu usuário.'));
     } catch (err: any) {
       setError(err.message || 'Erro na autenticação.');
     }
