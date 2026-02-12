@@ -165,23 +165,25 @@ export function SalaView() {
         }}
       />
 
-      <SalaFormDialog
-        open={openForm}
-        onClose={() => {
-          setOpenForm(false);
-          setSalaSelected(null);
-        }}
-        currentData={salaSelected}
-        onSuccess={() => {
-          getData();
-          setNotification({
-            open: true,
-            message: `Sala ${salaSelected ? 'editada' : 'criada'} com sucesso!`,
-            severity: 'success',
-          });
-          setSalaSelected(null);
-        }}
-      />
+      {openForm && (
+        <SalaFormDialog
+          open={openForm}
+          onClose={() => {
+            setOpenForm(false);
+            setSalaSelected(null);
+          }}
+          currentData={salaSelected}
+          onSuccess={() => {
+            getData();
+            setNotification({
+              open: true,
+              message: `Sala ${salaSelected ? 'editada' : 'criada'} com sucesso!`,
+              severity: 'success',
+            });
+            setSalaSelected(null);
+          }}
+        />
+      )}
 
       <DefaultSnackBar
         open={notification.open}

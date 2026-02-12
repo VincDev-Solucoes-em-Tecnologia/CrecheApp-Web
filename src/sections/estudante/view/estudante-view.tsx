@@ -13,10 +13,13 @@ import type {
 
 import { useState, useEffect, useCallback } from 'react';
 
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 import AddIcon from '@mui/icons-material/Add';
 import { ptBR } from '@mui/x-data-grid/locales';
 import EditIcon from '@mui/icons-material/Edit';
+import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
   DataGrid,
@@ -66,6 +69,20 @@ export function EstudanteView() {
       headerName: 'Nome',
       flex: 1,
       valueGetter: (value, row) => `${row.nome} ${row.sobrenome}`,
+      renderCell: (params) => (
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ height: '100%' }}>
+          <Avatar
+            alt={params.row.nome!}
+            src={params.row.fotoThumbnailUrl!}
+            sx={{ width: 30, height: 30, fontSize: '0.9rem' }}
+          >
+            {params.row.nome ? params.row.nome[0] : ''}
+          </Avatar>
+          <Typography variant="body2" noWrap>
+            {params.row.nome} {params.row.sobrenome}
+          </Typography>
+        </Stack>
+      ),
     },
     {
       field: 'dataNascimento',
@@ -191,23 +208,25 @@ export function EstudanteView() {
         }}
       />
 
-      <EstudanteFormDialog
-        open={openForm}
-        onClose={() => {
-          setOpenForm(false);
-          setSelected(null);
-        }}
-        currentData={selected}
-        onSuccess={() => {
-          getData();
-          setNotification({
-            open: true,
-            message: `Criança ${selected ? 'editada' : 'criada'} com sucesso!`,
-            severity: 'success',
-          });
-          setSelected(null);
-        }}
-      />
+      {openForm && (
+        <EstudanteFormDialog
+          open={openForm}
+          onClose={() => {
+            setOpenForm(false);
+            setSelected(null);
+          }}
+          currentData={selected}
+          onSuccess={() => {
+            getData();
+            setNotification({
+              open: true,
+              message: `Criança ${selected ? 'editada' : 'criada'} com sucesso!`,
+              severity: 'success',
+            });
+            setSelected(null);
+          }}
+        />
+      )}
 
       <DefaultSnackBar
         open={notification.open}

@@ -49,6 +49,8 @@ export const EstudanteResponseSchema = z.object({
   paisResponsaveis: z.array(PaiResponsavelResponseSchema).nullable().optional(),
   intoleranciasAlimentares: z.array(IntoleranciaResponseSchema).nullable().optional(),
   medicamentos: z.array(MedicamentoResponseSchema).nullable().optional(),
+  fotoOriginalUrl: z.string().nullable(),
+  fotoThumbnailUrl: z.string().nullable(),
 });
 
 export type EstudanteResponse = z.infer<typeof EstudanteResponseSchema>;

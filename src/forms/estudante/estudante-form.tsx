@@ -1,3 +1,4 @@
+import type { ChangeEvent } from 'react';
 import type { UsuarioResponse } from 'src/models/user/usuario-response';
 
 import * as yup from 'yup';
@@ -8,8 +9,8 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import { Tooltip } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
+import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,18 +20,21 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { Badge, Stack, Tooltip } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'; // ou outro ícone
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-import { getDataSeisMesesAtras } from 'src/utils/format-time';
+import { formatTime, getDataSeisMesesAtras } from 'src/utils/format-time';
 import { capitalizeWords, capitalizeFirstLetter } from 'src/utils/format-text';
 
 import { getSalas } from 'src/services/sala-service';
 import { getUsuarios } from 'src/services/usuario-service';
-import { saveEstudante } from 'src/services/estudante-service';
+import { objectToFormData } from 'src/network/api-service';
+import { saveEstudanteForm } from 'src/services/estudante-service';
 import {
   EstudanteFormSchema,
   type EstudanteResponse,
@@ -77,13 +81,46 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
     severity: 'success',
   });
   const [openFormUsuario, setOpenFormUsuario] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+
+  const isEditing = currentData !== null;
 
   useEffect(() => {
     if (open) {
       getSalas(1, 1000, 'nome', 'asc').then((r) => setSalas(r.data || []));
       getUsuarios(1, 1000, 'nome', 'asc', 'Pai').then((r) => setPais(r.data?.items || []));
+      setPreviewUrl(currentData?.fotoOriginalUrl || '');
     }
-  }, [open]);
+  }, [open, currentData]);
+
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      const sizeInMB = file.size / 1024 / 1024;
+      if (sizeInMB > 5) {
+        setNotification({
+          open: true,
+          message: 'A foto deve ter no máximo 5MB.',
+          severity: 'warning',
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        setNotification({
+          open: true,
+          message: 'O arquivo deve ser uma imagem.',
+          severity: 'warning',
+        });
+        return;
+      }
+
+      formik.setFieldValue('fotoArquivo', file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+    }
+  };
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -109,19 +146,23 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
           nome: m.nome || '',
           doseEmMl: m.doseEmMl || 0,
           observacao: m.observacao || '',
-          horarios: m.horarios || [],
+          horarios: m.horarios.map((x) => formatTime(x)) || [],
         })) || [],
+      fotoArquivo: null,
     },
     onSubmit: async (values) => {
       const payload: any = {
         ...values,
         id: values.id,
         dataNascimento: new Date(values.dataNascimento).toISOString(),
+        foto: values.fotoArquivo,
       };
 
       delete payload._paisObjetos;
 
-      await saveEstudante(payload)
+      const formData = objectToFormData(payload);
+
+      await saveEstudanteForm(formData, isEditing)
         .then(() => {
           onSuccess?.();
           onClose();
@@ -152,10 +193,10 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>{currentData ? 'Editar Criança' : 'Nova Criança'}</DialogTitle>
+      <DialogTitle>{isEditing ? 'Editar Criança' : 'Nova Criança'}</DialogTitle>
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit} noValidate>
-          <DialogContent dividers>
+          <DialogContent>
             <Grid container spacing={2}>
               {/* --- DADOS PESSOAIS --- */}
               <Grid size={12}>
@@ -164,67 +205,127 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                 </Typography>
               </Grid>
 
-              <Grid size={12}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Nome"
-                  name="nome"
-                  onBlur={(e) => {
-                    formik.handleBlur(e);
-                    formik.setFieldValue('nome', capitalizeWords(e.target.value));
-                  }}
-                  value={formik.values.nome}
-                  onChange={formik.handleChange}
-                  error={formik.touched.nome && Boolean(formik.errors.nome)}
-                  helperText={formik.touched.nome && formik.errors.nome}
-                />
-              </Grid>
-              <Grid size={12}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Sobrenome"
-                  name="sobrenome"
-                  onBlur={(e) => {
-                    formik.handleBlur(e);
-                    formik.setFieldValue('sobrenome', capitalizeWords(e.target.value));
-                  }}
-                  value={formik.values.sobrenome}
-                  onChange={formik.handleChange}
-                  error={formik.touched.sobrenome && Boolean(formik.errors.sobrenome)}
-                />
-              </Grid>
-              <Grid size={12}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Data de Nascimento"
-                  name="dataNascimento"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  value={formik.values.dataNascimento}
-                  onChange={formik.handleChange}
-                  error={formik.touched.dataNascimento && Boolean(formik.errors.dataNascimento)}
-                />
-              </Grid>
-              <Grid size={12}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Sala"
-                  name="salaId"
-                  value={formik.values.salaId}
-                  onChange={formik.handleChange}
-                  error={formik.touched.salaId && Boolean(formik.errors.salaId)}
-                >
-                  {salas.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {s.nome}
-                    </MenuItem>
-                  ))}
-                </TextField>
+              <Grid size={{ xs: 12 }}>
+                <Grid container spacing={2} alignItems="center">
+                  {/* COLUNA 1: FOTO (Ocupa 3/12 do espaço em telas médias+) */}
+                  <Grid
+                    size={{ xs: 12, sm: 3, md: 3 }}
+                    sx={{ display: 'flex', justifyContent: 'center' }}
+                  >
+                    <Stack direction="column" alignItems="center" spacing={1}>
+                      <Badge
+                        overlap="circular"
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                        badgeContent={
+                          <label htmlFor="icon-button-file">
+                            <input
+                              accept="image/*"
+                              id="icon-button-file"
+                              type="file"
+                              style={{ display: 'none' }}
+                              onChange={handlePhotoChange}
+                            />
+                            <IconButton
+                              color="primary"
+                              aria-label="enviar foto"
+                              component="span"
+                              sx={{
+                                bgcolor: 'background.paper',
+                                boxShadow: 2,
+                                '&:hover': { bgcolor: '#f0f0f0' },
+                              }}
+                            >
+                              <PhotoCameraIcon />
+                            </IconButton>
+                          </label>
+                        }
+                      >
+                        <Avatar
+                          alt="Foto da Criança"
+                          src={previewUrl}
+                          sx={{ width: 100, height: 100, border: '1px solid #e0e0e0' }}
+                        >
+                          {!previewUrl && formik.values.nome
+                            ? formik.values.nome[0].toUpperCase()
+                            : ''}
+                        </Avatar>
+                      </Badge>
+                      <Typography variant="caption" color="textSecondary" align="center">
+                        Foto (Máx 5MB)
+                      </Typography>
+                    </Stack>
+                  </Grid>
+
+                  {/* COLUNA 2: CAMPOS NOME/SOBRENOME (Ocupa 9/12 do espaço) */}
+                  <Grid size={{ xs: 12, sm: 9, md: 9 }}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Nome"
+                          name="nome"
+                          onBlur={(e) => {
+                            formik.handleBlur(e);
+                            formik.setFieldValue('nome', capitalizeWords(e.target.value));
+                          }}
+                          value={formik.values.nome}
+                          onChange={formik.handleChange}
+                          error={formik.touched.nome && Boolean(formik.errors.nome)}
+                          helperText={formik.touched.nome && formik.errors.nome}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Sobrenome"
+                          name="sobrenome"
+                          onBlur={(e) => {
+                            formik.handleBlur(e);
+                            formik.setFieldValue('sobrenome', capitalizeWords(e.target.value));
+                          }}
+                          value={formik.values.sobrenome}
+                          onChange={formik.handleChange}
+                          error={formik.touched.sobrenome && Boolean(formik.errors.sobrenome)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Data de Nascimento"
+                          name="dataNascimento"
+                          type="date"
+                          InputLabelProps={{ shrink: true }}
+                          value={formik.values.dataNascimento}
+                          onChange={formik.handleChange}
+                          error={
+                            formik.touched.dataNascimento && Boolean(formik.errors.dataNascimento)
+                          }
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          select
+                          fullWidth
+                          size="small"
+                          label="Sala"
+                          name="salaId"
+                          value={formik.values.salaId}
+                          onChange={formik.handleChange}
+                          error={formik.touched.salaId && Boolean(formik.errors.salaId)}
+                        >
+                          {salas.map((s) => (
+                            <MenuItem key={s.id} value={s.id}>
+                              {s.nome}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
               </Grid>
 
               {/* --- SAÚDE & RESPONSÁVEIS --- */}
@@ -245,6 +346,7 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                     formik.setFieldValue('nomePediatra', capitalizeWords(e.target.value));
                   }}
                   value={formik.values.nomePediatra}
+                  error={formik.touched.nomePediatra && Boolean(formik.errors.nomePediatra)}
                   onChange={formik.handleChange}
                 />
               </Grid>
@@ -259,6 +361,7 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                     formik.setFieldValue('planoDeSaude', capitalizeFirstLetter(e.target.value));
                   }}
                   value={formik.values.planoDeSaude}
+                  error={formik.touched.planoDeSaude && Boolean(formik.errors.planoDeSaude)}
                   onChange={formik.handleChange}
                 />
               </Grid>
@@ -389,8 +492,16 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                 {({ push, remove }) => (
                   <Grid size={12}>
                     {formik.values.medicamentos.map((medicamento: any, index: any) => {
+                      const touchedNome = getIn(formik.touched, `medicamentos[${index}].nome`);
                       const errorNome = getIn(formik.errors, `medicamentos[${index}].nome`);
+
+                      const touchedDose = getIn(formik.touched, `medicamentos[${index}].doseEmMl`);
                       const errorDose = getIn(formik.errors, `medicamentos[${index}].doseEmMl`);
+
+                      const touchedHorarios = getIn(
+                        formik.touched,
+                        `medicamentos[${index}].horarios`
+                      );
                       const errorHorarios = getIn(formik.errors, `medicamentos[${index}].horarios`);
 
                       return (
@@ -425,8 +536,8 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                                 }}
                                 value={medicamento.nome}
                                 onChange={formik.handleChange}
-                                error={Boolean(errorNome)}
-                                helperText={errorNome}
+                                error={Boolean(touchedNome && errorNome)}
+                                helperText={touchedNome && errorNome}
                               />
                             </Grid>
                             <Grid size={4}>
@@ -438,7 +549,8 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                                 name={`medicamentos[${index}].doseEmMl`}
                                 value={medicamento.doseEmMl}
                                 onChange={formik.handleChange}
-                                error={Boolean(errorDose)}
+                                error={Boolean(touchedDose && errorDose)}
+                                helperText={touchedDose && errorDose}
                               />
                             </Grid>
                             <Grid size={12}>
@@ -506,11 +618,13 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                                         Adicionar Hora
                                       </Button>
                                     </Box>
-                                    {errorHorarios && typeof errorHorarios === 'string' && (
-                                      <Typography variant="caption" color="error">
-                                        {errorHorarios}
-                                      </Typography>
-                                    )}
+                                    {touchedHorarios &&
+                                      errorHorarios &&
+                                      typeof errorHorarios === 'string' && (
+                                        <Typography variant="caption" color="error">
+                                          {errorHorarios}
+                                        </Typography>
+                                      )}
                                   </Box>
                                 )}
                               </FieldArray>

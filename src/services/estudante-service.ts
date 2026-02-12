@@ -1,7 +1,7 @@
 import type { ApiResponse } from 'src/network/api-response';
 import type { PagedEstudanteResponse } from 'src/models/estudante/estudante-reponse';
 
-import { request } from 'src/network/api-service';
+import { request, requestPOSTOrPUTForm } from 'src/network/api-service';
 
 const BASE_URL = '/api/estudante';
 
@@ -32,8 +32,15 @@ export const getEstudantes = async (
 
 export const saveEstudante = async (payload: any): Promise<ApiResponse<string>> => {
   const method = payload.id ? 'PUT' : 'POST';
-  const url = payload.id ? `${BASE_URL}` : `${BASE_URL}`;
-  return await request<string>(method, url, payload);
+  return await request<string>(method, BASE_URL, payload);
+};
+
+export const saveEstudanteForm = async (
+  payload: any,
+  isEditing: boolean
+): Promise<ApiResponse<string>> => {
+  const method = isEditing ? 'PUT' : 'POST';
+  return await requestPOSTOrPUTForm<string>(method, BASE_URL, payload);
 };
 
 export const removerEstudante = async (id: string): Promise<ApiResponse<void>> =>

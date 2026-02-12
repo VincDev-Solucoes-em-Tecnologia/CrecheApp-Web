@@ -75,7 +75,7 @@ export function SignInView() {
             setError('Usuário sem permissão para acessar essa página');
           }
         })
-        .catch((e) => setError(e.message || 'Validação do seu usuário.'));
+        .catch((e) => setError(e.message || 'Erro na validação do seu usuário.'));
     } catch (err: any) {
       setError(err.message || 'Erro na autenticação.');
     }

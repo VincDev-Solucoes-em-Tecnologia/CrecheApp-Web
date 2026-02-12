@@ -189,30 +189,32 @@ export function UserView() {
         }}
       />
 
-      <UserFormDialog
-        open={openForm}
-        onClose={() => {
-          setOpenForm(false);
-          setUserSelected(null);
-        }}
-        currentUser={
-          userSelected
-            ? {
-                ...userSelected,
-                tipo: USER_TYPES.find((t) => t.label === userSelected.tipo)?.value || 2,
-              }
-            : null
-        }
-        onSuccess={() => {
-          getData();
-          setNotification({
-            open: true,
-            message: `Usuário ${userSelected ? 'editado' : 'criado'} com sucesso!`,
-            severity: 'success',
-          });
-          setUserSelected(null);
-        }}
-      />
+      {openForm && (
+        <UserFormDialog
+          open={openForm}
+          onClose={() => {
+            setOpenForm(false);
+            setUserSelected(null);
+          }}
+          currentUser={
+            userSelected
+              ? {
+                  ...userSelected,
+                  tipo: USER_TYPES.find((t) => t.label === userSelected.tipo)?.value || 2,
+                }
+              : null
+          }
+          onSuccess={() => {
+            getData();
+            setNotification({
+              open: true,
+              message: `Usuário ${userSelected ? 'editado' : 'criado'} com sucesso!`,
+              severity: 'success',
+            });
+            setUserSelected(null);
+          }}
+        />
+      )}
 
       <DefaultSnackBar
         open={notification.open}

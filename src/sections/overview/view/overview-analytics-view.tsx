@@ -1,17 +1,28 @@
+import type { UsuarioResponse } from 'src/models/user/usuario-response';
+
+import { useState, useEffect } from 'react';
+
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
 import { DashboardContent } from 'src/layouts/dashboard';
-
-import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
+import { getUsuarioInfo } from 'src/services/usuario-service';
 
 // ----------------------------------------------------------------------
 
 export function OverviewAnalyticsView() {
+  const [user, setUser] = useState<UsuarioResponse | null>(null);
+
+  useEffect(() => {
+    getUsuarioInfo().then((r) => {
+      setUser(r.data);
+    });
+  }, []);
+
   return (
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
-        Olá, Bem-vindo de volta 👋
+        Olá {user?.nome} {user?.sobrenome}, Bem-vindo de volta 👋`
       </Typography>
 
       <Grid container spacing={3}>
