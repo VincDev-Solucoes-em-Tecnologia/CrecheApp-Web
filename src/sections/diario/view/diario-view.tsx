@@ -270,7 +270,7 @@ export function DiarioView() {
       minWidth: 150,
       valueGetter: (value, row) =>
         row.dataHoraUltimaVisualizacao
-          ? dayjs(row.dataHoraUltimaVisualizacao).format('DD-MM-YYYY HH:MM')
+          ? dayjs(row.dataHoraUltimaVisualizacao).format('DD-MM-YYYY HH:mm')
           : '',
     },
   ];
@@ -340,7 +340,7 @@ export function DiarioView() {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Estudante (Opcional)"
+                  label="Criança (Opcional)"
                   error={formik.touched.estudante && Boolean(formik.errors.estudante)}
                   helperText={formik.touched.estudante && (formik.errors.estudante as string)}
                 />
