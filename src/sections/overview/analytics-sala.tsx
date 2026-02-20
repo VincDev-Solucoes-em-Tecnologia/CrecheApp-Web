@@ -7,13 +7,18 @@ import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 
 import { Chart, useChart } from 'src/components/chart';
 
+// ----------------------------------------------------------------------
+
 type Props = CardProps & {
   title?: string;
   subheader?: string;
   chart: {
     colors?: string[];
     categories?: string[];
-    series: number[];
+    series: {
+      name: string;
+      data: number[];
+    }[];
     options?: ChartOptions;
   };
 };
@@ -28,8 +33,8 @@ export function AnalyticsSala({ title, subheader, chart, sx, ...other }: Props) 
 
   const chartOptions = useChart({
     colors: chartColors,
-    stroke: { width: 2, colors: [theme.palette.background.paper] },
-    labels: chart.categories,
+    stroke: { width: 2, colors: ['transparent'] },
+    xaxis: { categories: chart.categories },
     legend: { show: true },
     tooltip: { y: { formatter: (value: number) => `${value}` } },
     ...chart.options,
@@ -37,10 +42,10 @@ export function AnalyticsSala({ title, subheader, chart, sx, ...other }: Props) 
 
   return (
     <Card sx={sx} {...other}>
-      <CardHeader title={title} subheader={subheader} sx={{ mb: 5 }} />
+      <CardHeader title={title} subheader={subheader} />
 
       <Chart
-        type="pie"
+        type="bar"
         series={chart.series}
         options={chartOptions}
         slotProps={{ loading: { p: 2.5 } }}
@@ -48,9 +53,7 @@ export function AnalyticsSala({ title, subheader, chart, sx, ...other }: Props) 
           pl: 1,
           py: 2.5,
           pr: 2.5,
-          height: 325,
-          display: 'flex',
-          justifyContent: 'center',
+          height: 364,
         }}
       />
     </Card>

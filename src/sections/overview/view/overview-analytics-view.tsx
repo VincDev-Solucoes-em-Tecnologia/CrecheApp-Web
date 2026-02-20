@@ -88,6 +88,12 @@ export function OverviewAnalyticsView() {
             subheader="Quantidade de alunos por sala"
             chart={{
               categories: dashboard?.alunosPorSala.map((item) => item.nome) || [],
+              series: [
+                {
+                  name: 'Qtd. Alunos',
+                  data: dashboard ? dashboard.alunosPorSala.map((item) => item.total) : [],
+                },
+              ],
               colors: [
                 theme.palette.primary.main,
                 theme.palette.info.main,
@@ -97,9 +103,23 @@ export function OverviewAnalyticsView() {
                 '#FF6B6B',
                 '#4ECDC4',
               ],
-              series: dashboard ? dashboard.alunosPorSala.map((item) => item.total) : [],
               options: {
-                legend: { show: true },
+                plotOptions: {
+                  bar: {
+                    columnWidth: '50%',
+                    distributed: true,
+                    borderRadius: 4,
+                  },
+                },
+                legend: { show: false },
+                yaxis: {
+                  labels: {
+                    formatter: (value: number) => value.toFixed(0),
+                  },
+                },
+                tooltip: {
+                  y: { formatter: (value: number) => `${value.toFixed(0)}` },
+                },
               },
             }}
           />
