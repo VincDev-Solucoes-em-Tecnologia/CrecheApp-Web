@@ -4,6 +4,7 @@ import type { DiarioResponse } from 'src/models/diario/diario-response';
 
 import dayjs from 'dayjs';
 import * as Yup from 'yup';
+import utc from 'dayjs/plugin/utc';
 import { useFormik } from 'formik';
 import { useState, useEffect } from 'react';
 
@@ -32,6 +33,8 @@ import { getEstudantes } from 'src/services/estudante-service';
 import { DefaultSnackBar } from 'src/components/snackbar/default-snackbar';
 
 // ----------------------------------------------------------------------
+
+dayjs.extend(utc);
 
 interface EstudanteOption {
   id: string;
@@ -270,7 +273,7 @@ export function DiarioView() {
       minWidth: 150,
       valueGetter: (value, row) =>
         row.dataHoraUltimaVisualizacao
-          ? dayjs(row.dataHoraUltimaVisualizacao).format('DD-MM-YYYY HH:mm')
+          ? dayjs.utc(row.dataHoraUltimaVisualizacao).local().format('DD-MM-YYYY HH:mm')
           : '',
     },
   ];
