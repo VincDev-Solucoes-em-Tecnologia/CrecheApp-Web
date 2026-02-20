@@ -102,6 +102,7 @@ export function DiarioView() {
       minWidth: 150,
       valueGetter: (value, row) => dayjs(row.dataHora).format('DD-MM-YYYY'),
     },
+
     {
       field: 'nomeCompletoEstudante',
       headerName: 'Nome criança',
@@ -113,6 +114,37 @@ export function DiarioView() {
       headerName: 'Sala',
       flex: 1,
       minWidth: 100,
+    },
+    {
+      field: 'paisResponsaveis',
+      headerName: 'Responsáveis',
+      flex: 1.5,
+      minWidth: 250,
+      sortable: false,
+      filterable: false,
+      valueGetter: (value, row) => {
+        if (!row.paisResponsaveis || row.paisResponsaveis.length === 0) return '';
+        return row.paisResponsaveis.map((p) => `${p.nomeCompleto}`).join(', ');
+      },
+      renderCell: (params) => {
+        const lista = params.row.paisResponsaveis || [];
+
+        return (
+          <div style={{ lineHeight: '1.2em', padding: '5px 0' }}>
+            {lista.map((pai, idx) => (
+              <div
+                key={pai.id || idx}
+                style={{
+                  fontSize: '0.85rem',
+                  color: pai.ativo === false ? '#d32f2f' : 'inherit',
+                }}
+              >
+                {`• ${pai.nomeCompleto}`}
+              </div>
+            ))}
+          </div>
+        );
+      },
     },
     {
       field: 'evacuacao',
@@ -127,6 +159,7 @@ export function DiarioView() {
       width: 120,
       type: 'boolean',
       valueGetter: (value, row) => row.necessidadeFisiologica?.fezXixi,
+      cellClassName: 'alinhamento-topo',
     },
     {
       field: 'alimentacoes',
@@ -226,16 +259,19 @@ export function DiarioView() {
     },
     {
       field: 'usuarioUltimaVisualizacao',
-      headerName: 'Visto por',
+      headerName: 'Ultima visualização',
       flex: 1,
-      minWidth: 150,
+      minWidth: 200,
     },
     {
       field: 'dataHoraUltimaVisualizacao',
-      headerName: 'Ultima visualização',
+      headerName: 'Data Ultima visualização',
       flex: 1,
       minWidth: 150,
-      valueGetter: (value, row) => dayjs(row.dataHoraUltimaVisualizacao).format('DD-MM-YYYY HH:MM'),
+      valueGetter: (value, row) =>
+        row.dataHoraUltimaVisualizacao
+          ? dayjs(row.dataHoraUltimaVisualizacao).format('DD-MM-YYYY HH:MM')
+          : '',
     },
   ];
 
@@ -342,6 +378,10 @@ export function DiarioView() {
           sx={{
             border: 'none',
             '& .MuiDataGrid-cell': { borderBottom: '1px dashed #F1F3F4' },
+            '& .alinhamento-topo': {
+              alignItems: 'flex-start',
+              paddingTop: '8px', // Mesmo padding superior da coluna de texto
+            },
           }}
           initialState={{
             columns: {

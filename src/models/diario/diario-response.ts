@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { UsuarioSchema } from '../user/usuario-response';
+
 const timeSpanRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
 
 export const DiarioAlimentacaoSchema = z.object({
@@ -69,6 +71,11 @@ export const DiarioSchema = z.object({
     .nullable()
     .transform((val) => val ?? ''),
   temDados: z.boolean().default(false),
+  paisResponsaveis: z
+    .array(UsuarioSchema.partial())
+    .optional()
+    .nullable()
+    .transform((val) => val || []),
 });
 
 export type DiarioResponse = z.infer<typeof DiarioSchema>;
