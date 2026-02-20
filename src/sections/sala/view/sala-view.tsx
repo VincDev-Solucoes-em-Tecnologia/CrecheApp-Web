@@ -78,13 +78,31 @@ export function SalaView() {
     },
     {
       field: 'professores',
-      headerName: 'Professores Responsáveis',
+      headerName: 'Professores',
       flex: 1.5,
       minWidth: 250,
       sortable: false,
       valueGetter: (value, row) => {
         if (!row.professoresResponsaveis || row.professoresResponsaveis.length === 0) return '';
-        return row.professoresResponsaveis.map((p) => `${p.nome}`).join(', ');
+        return row.professoresResponsaveis.map((p) => `${p.nomeCompleto}`).join(', ');
+      },
+      renderCell: (params) => {
+        const lista = params.row.professoresResponsaveis || [];
+        return (
+          <div style={{ whiteSpace: 'normal', lineHeight: '1.5em' }}>
+            {lista.map((p, index) => (
+              <span
+                key={p.id || index}
+                style={{
+                  color: p.ativo ? 'inherit' : '#d32f2f',
+                }}
+              >
+                {p.nomeCompleto}
+                {index < lista.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </div>
+        );
       },
     },
     {
@@ -96,7 +114,7 @@ export function SalaView() {
       getActions: ({ row }) => [
         <GridActionsCellItem icon={<EditIcon />} label="Editar " onClick={() => handleEdit(row)} />,
         <GridActionsCellItem
-          icon={<DeleteIcon />}
+          icon={<DeleteIcon color="error" />}
           label="Excluir"
           onClick={() => handleDelete(row)}
         />,

@@ -18,6 +18,8 @@ export const DashboardPage = lazy(() => import('src/pages/dashboard'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const SalaPage = lazy(() => import('src/pages/sala'));
 export const EstudantePage = lazy(() => import('src/pages/estudante'));
+export const DiarioPage = lazy(() => import('src/pages/diario'));
+export const CidadePage = lazy(() => import('src/pages/cidade'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
 
@@ -56,7 +58,9 @@ export const routesSection: RouteObject[] = [
       { index: true, element: <DashboardPage /> },
       { path: 'users', element: <UserPage /> },
       { path: 'estudantes', element: <EstudantePage /> },
+      { path: 'diarios', element: <DiarioPage /> },
       { path: 'salas', element: <SalaPage /> },
+      { path: 'cidades', element: <CidadePage /> },
     ],
   },
   {

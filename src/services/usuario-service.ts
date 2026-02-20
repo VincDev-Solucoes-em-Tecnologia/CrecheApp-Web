@@ -23,14 +23,16 @@ export const getUsuarios = async (
   sort: string,
   sortDirection: string,
   tipo: string | null = null,
-  filters: any | null = null
+  filters: any | null = null,
+  onlyActive: boolean | null = null
 ): Promise<ApiResponse<PagedUsuarioResponse>> => {
   const _sort = sort !== '' ? `&sort=${sort}` : '';
   const _sortDirection = sortDirection !== '' ? `&sortDirection=${sortDirection}` : '';
   const _type = tipo ? `&tipo=${tipo}` : '';
+  const _onlyActive = onlyActive !== null ? `&onlyActive=${onlyActive}` : '';
   const response = await request<PagedUsuarioResponse>(
     'POST',
-    `api/usuario?page=${page}&size=${size}${_sort}${_sortDirection}${_type}`,
+    `api/usuario?page=${page}&size=${size}${_sort}${_sortDirection}${_type}${_onlyActive}`,
     filters
   );
 
@@ -62,6 +64,19 @@ export const addUsuario = async (
 
 export const updateUsuario = async (payload: any): Promise<ApiResponse<string>> => {
   const response = await request<string>('PUT', `api/usuario`, payload);
+
+  if (!response.isSuccess) {
+    throw new Error(response.error.error.detail || 'Erro na requisição');
+  }
+
+  return {
+    ...response,
+    data: response.data,
+  };
+};
+
+export const updateStatus = async (id: string, ativo: boolean): Promise<ApiResponse<string>> => {
+  const response = await request<string>('PUT', `api/usuario/status/${id}/${ativo}`);
 
   if (!response.isSuccess) {
     throw new Error(response.error.error.detail || 'Erro na requisição');

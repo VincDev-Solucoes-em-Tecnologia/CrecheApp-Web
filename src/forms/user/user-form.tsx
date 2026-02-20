@@ -29,11 +29,12 @@ export type UserFormData = {
   email?: string;
   nome?: string;
   sobrenome?: string;
-  endereco?: string;
-  bairro?: string;
-  numero?: string | number;
+  endereco?: string | null;
+  bairro?: string | null;
+  numero?: string | number | null;
   cidadeId?: number | string;
   tipo?: number;
+  telefoneCelular?: string | null;
 };
 
 type UserFormDialogProps = {
@@ -48,12 +49,17 @@ const validationSchema = yup.object({
   nome: yup.string().required('Nome é obrigatório'),
   sobrenome: yup.string().required('Sobrenome é obrigatório'),
   email: yup.string().email('Email inválido').required('Email é obrigatório'),
-  endereco: yup.string().required('Endereço é obrigatório'),
-  bairro: yup.string().required('Bairro é obrigatório'),
-  numero: yup.number().typeError('Deve ser um número').required('Número é obrigatório'),
+  endereco: yup.string(),
+  bairro: yup.string(),
+  numero: yup.number().typeError('Deve ser um número'),
   tipo: yup.number().required('Selecione um tipo'),
   cidadeId: yup.string().required('Selecione uma cidade'),
 });
+
+const formatPhone = (value: string) => {
+  const numeric = value.replace(/\D/g, '').substring(0, 11);
+  return numeric.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
+};
 
 export function UserFormDialog({
   open,
@@ -97,6 +103,7 @@ export function UserFormDialog({
       numero: currentUser?.numero ?? '',
       tipo: currentUser?.tipo || 2,
       cidadeId: currentUser?.cidadeId || '',
+      telefoneCelular: currentUser?.telefoneCelular || '',
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -142,7 +149,7 @@ export function UserFormDialog({
       <DialogContent sx={{ mt: 1 }}>
         <form onSubmit={formik.handleSubmit}>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 select
                 fullWidth
@@ -162,21 +169,6 @@ export function UserFormDialog({
                   </MenuItem>
                 ))}
               </TextField>
-            </Grid>
-
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                size="small"
-                id="email"
-                name="email"
-                label="Email"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.email && Boolean(formik.errors.email)}
-                helperText={formik.touched.email && formik.errors.email}
-              />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -212,6 +204,38 @@ export function UserFormDialog({
                 }}
                 error={formik.touched.sobrenome && Boolean(formik.errors.sobrenome)}
                 helperText={formik.touched.sobrenome && formik.errors.sobrenome}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                id="email"
+                name="email"
+                label="Email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                id="telefoneCelular"
+                name="telefoneCelular"
+                label="Telefone/Celular"
+                value={formik.values.telefoneCelular}
+                onChange={(e) => {
+                  formik.setFieldValue('telefoneCelular', formatPhone(e.target.value));
+                }}
+                slotProps={{ htmlInput: { maxLength: 15 } }}
+                error={formik.touched.telefoneCelular && Boolean(formik.errors.telefoneCelular)}
+                helperText={formik.touched.telefoneCelular && formik.errors.telefoneCelular}
               />
             </Grid>
 

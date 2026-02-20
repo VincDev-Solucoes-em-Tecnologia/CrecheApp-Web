@@ -1,6 +1,9 @@
+import 'dayjs/locale/pt-br';
+
 import type { ChangeEvent } from 'react';
 import type { UsuarioResponse } from 'src/models/user/usuario-response';
 
+import dayjs from 'dayjs';
 import * as yup from 'yup';
 import { useState, useEffect } from 'react';
 import { getIn, useFormik, FieldArray, FormikProvider } from 'formik';
@@ -25,8 +28,11 @@ import Autocomplete from '@mui/material/Autocomplete';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 import { formatTime, getDataSeisMesesAtras } from 'src/utils/format-time';
 import { capitalizeWords, capitalizeFirstLetter } from 'src/utils/format-text';
@@ -88,7 +94,9 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
   useEffect(() => {
     if (open) {
       getSalas(1, 1000, 'nome', 'asc').then((r) => setSalas(r.data || []));
-      getUsuarios(1, 1000, 'nome', 'asc', 'Pai').then((r) => setPais(r.data?.items || []));
+      getUsuarios(1, 1000, 'nome', 'asc', 'Pai', null, false).then((r) =>
+        setPais(r.data?.items || [])
+      );
       setPreviewUrl(currentData?.fotoOriginalUrl || '');
     }
   }, [open, currentData]);
@@ -149,6 +157,7 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
           horarios: m.horarios.map((x) => formatTime(x)) || [],
         })) || [],
       fotoArquivo: null,
+      removerFoto: false,
     },
     onSubmit: async (values) => {
       const payload: any = {
@@ -156,6 +165,7 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
         id: values.id,
         dataNascimento: new Date(values.dataNascimento).toISOString(),
         foto: values.fotoArquivo,
+        removerFoto: values.removerFoto,
       };
 
       delete payload._paisObjetos;
@@ -190,6 +200,12 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
       return errors;
     },
   });
+
+  const handleRemovePhoto = () => {
+    setPreviewUrl('');
+    formik.setFieldValue('fotoArquivo', null);
+    formik.setFieldValue('removerFoto', true);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -243,16 +259,25 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                         <Avatar
                           alt="Foto da Criança"
                           src={previewUrl}
-                          sx={{ width: 100, height: 100, border: '1px solid #e0e0e0' }}
+                          sx={{ width: 150, height: 150, border: '1px solid #e0e0e0' }}
                         >
                           {!previewUrl && formik.values.nome
                             ? formik.values.nome[0].toUpperCase()
                             : ''}
                         </Avatar>
                       </Badge>
-                      <Typography variant="caption" color="textSecondary" align="center">
-                        Foto (Máx 5MB)
-                      </Typography>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Typography variant="caption" color="textSecondary" align="center">
+                          Foto (Máx 5MB)
+                        </Typography>
+                        {previewUrl && (
+                          <Tooltip title="Remover foto">
+                            <IconButton size="small" color="error" onClick={handleRemovePhoto}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Stack>
                     </Stack>
                   </Grid>
 
@@ -290,7 +315,7 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                           error={formik.touched.sobrenome && Boolean(formik.errors.sobrenome)}
                         />
                       </Grid>
-                      <Grid size={{ xs: 12 }}>
+                      {/* <Grid size={{ xs: 12 }}>
                         <TextField
                           fullWidth
                           size="small"
@@ -304,6 +329,42 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                             formik.touched.dataNascimento && Boolean(formik.errors.dataNascimento)
                           }
                         />
+                      </Grid> */}
+                      <Grid size={{ xs: 12 }}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+                          <DatePicker
+                            label="Data de Nascimento"
+                            format="DD/MM/YYYY"
+                            minDate={dayjs('0001-01-01')}
+                            disableFuture
+                            value={
+                              formik.values.dataNascimento
+                                ? dayjs(formik.values.dataNascimento)
+                                : null
+                            }
+                            onChange={(newValue) => {
+                              if (newValue && newValue.isValid()) {
+                                formik.setFieldValue(
+                                  'dataNascimento',
+                                  newValue.format('YYYY-MM-DD')
+                                );
+                              } else {
+                                formik.setFieldValue('dataNascimento', null);
+                              }
+                            }}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                                fullWidth: true,
+                                error:
+                                  formik.touched.dataNascimento &&
+                                  Boolean(formik.errors.dataNascimento),
+                                helperText:
+                                  formik.touched.dataNascimento && formik.errors.dataNascimento,
+                              },
+                            }}
+                          />
+                        </LocalizationProvider>
                       </Grid>
                       <Grid size={{ xs: 12 }}>
                         <TextField
@@ -371,11 +432,7 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                   multiple
                   options={pais}
                   size="small"
-                  getOptionLabel={(option) => {
-                    const nome = option.nome || '';
-                    const sobrenome = option.sobrenome || '';
-                    return `${nome} ${sobrenome}`.trim();
-                  }}
+                  getOptionLabel={(option) => option.nomeCompleto}
                   value={formik.values._paisObjetos as UsuarioResponse[]}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                   onChange={(_, newValue) => {
@@ -383,6 +440,33 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                     formik.setFieldValue(
                       'paisResponsaveisIds',
                       newValue.map((v) => v.id)
+                    );
+                  }}
+                  renderValue={(value, getTagProps) =>
+                    value.map((option, index) => {
+                      const { key, ...tagProps } = getTagProps({ index });
+                      return (
+                        <Chip
+                          size="small"
+                          key={key}
+                          label={option.nomeCompleto}
+                          {...tagProps}
+                          color={option.ativo ? 'default' : 'error'}
+                          variant="outlined"
+                        />
+                      );
+                    })
+                  }
+                  renderOption={(props, option) => {
+                    const { key, ...optionProps } = props;
+                    return (
+                      <li
+                        key={key}
+                        {...optionProps}
+                        style={{ color: option.ativo ? 'inherit' : 'red' }}
+                      >
+                        {option.nomeCompleto} {option.ativo ? '' : '(Inativo)'}
+                      </li>
                     );
                   }}
                   renderInput={(params) => (
@@ -677,13 +761,15 @@ export function EstudanteFormDialog({ open, onClose, currentData, onSuccess }: P
                 id: r.id,
                 nome: r.nome,
                 sobrenome: r.sobrenome,
-              } as UsuarioResponse, // O cast deve ser no objeto inteiro, se necessário
+              } as UsuarioResponse,
             ]);
             formik.setFieldValue('paisResponsaveisIds', [
               ...formik.values.paisResponsaveisIds,
               r.id,
             ]);
-            getUsuarios(1, 100, 'nome', 'asc', 'Pai').then((r2) => setPais(r2.data?.items || []));
+            getUsuarios(1, 1000, 'nome', 'asc', 'Pai', null, false).then((r2) =>
+              setPais(r2.data?.items || [])
+            );
           }
         }}
       />

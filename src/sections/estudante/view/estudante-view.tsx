@@ -66,9 +66,10 @@ export function EstudanteView() {
   const columns: GridColDef<EstudanteResponse>[] = [
     {
       field: 'nome',
-      headerName: 'Nome',
+      headerName: 'Nome completo',
       flex: 1,
-      valueGetter: (value, row) => `${row.nome} ${row.sobrenome}`,
+      minWidth: 150,
+      valueGetter: (value, row) => row.nomeCompleto,
       renderCell: (params) => (
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ height: '100%' }}>
           <Avatar
@@ -112,7 +113,25 @@ export function EstudanteView() {
       filterable: false,
       valueGetter: (value, row) => {
         if (!row.paisResponsaveis || row.paisResponsaveis.length === 0) return '';
-        return row.paisResponsaveis.map((p) => `${p.nome}`).join(', ');
+        return row.paisResponsaveis.map((p) => `${p.nomeCompleto}`).join(', ');
+      },
+      renderCell: (params) => {
+        const lista = params.row.paisResponsaveis || [];
+        return (
+          <div style={{ whiteSpace: 'normal', lineHeight: '1.5em' }}>
+            {lista.map((p, index) => (
+              <span
+                key={p.id || index}
+                style={{
+                  color: p.ativo ? 'inherit' : '#d32f2f',
+                }}
+              >
+                {p.nomeCompleto}
+                {index < lista.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </div>
+        );
       },
     },
     {
@@ -123,7 +142,7 @@ export function EstudanteView() {
       getActions: ({ row }) => [
         <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleEdit(row)} />,
         <GridActionsCellItem
-          icon={<DeleteIcon />}
+          icon={<DeleteIcon color="error" />}
           label="Delete"
           onClick={() => handleDelete(row)}
         />,
@@ -205,6 +224,14 @@ export function EstudanteView() {
         sx={{
           border: 'none',
           '& .MuiDataGrid-cell': { borderBottom: '1px dashed #F1F3F4' },
+        }}
+        initialState={{
+          columns: {
+            columnVisibilityModel: {
+              nomePediatra: false,
+              planoDeSaude: false,
+            },
+          },
         }}
       />
 

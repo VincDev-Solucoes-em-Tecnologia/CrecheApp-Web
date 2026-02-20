@@ -1,14 +1,15 @@
 import GroupIcon from '@mui/icons-material/Group';
+import ListIcon from '@mui/icons-material/ListAlt';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FamilyIcon from '@mui/icons-material/FamilyRestroom';
 import BedroomBabyIcon from '@mui/icons-material/BedroomBaby';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
 
-import { Label } from 'src/components/label';
-import { SvgColor } from 'src/components/svg-color';
+// import { SvgColor } from 'src/components/svg-color';
 
 // ----------------------------------------------------------------------
 
-const icon = (name: string) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} />;
+// const icon = (name: string) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} />;
 
 export type NavItem = {
   title: string;
@@ -39,8 +40,18 @@ export const navData = [
     icon: <FamilyIcon />,
   },
   {
+    title: 'Diarios',
+    path: '/diarios',
+    icon: <ListIcon />,
+  },
+  {
     title: 'Salas',
     path: '/salas',
     icon: <BedroomBabyIcon />,
+  },
+  {
+    title: 'Cidades',
+    path: '/cidades',
+    icon: <LocationCityIcon />,
   },
 ];

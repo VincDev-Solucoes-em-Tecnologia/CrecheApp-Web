@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { UsuarioSchema } from '../user/usuario-response';
+
 const timeSpanRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
 // ==========================================
@@ -8,14 +10,6 @@ const timeSpanRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 // ==========================================
 
 const SalaResponseSchema = z.object({
-  id: z
-    .string()
-    .or(z.null())
-    .transform((val) => val || ''),
-  nome: z.string().nullable().optional(),
-});
-
-const PaiResponsavelResponseSchema = z.object({
   id: z
     .string()
     .or(z.null())
@@ -46,11 +40,16 @@ export const EstudanteResponseSchema = z.object({
   nomePediatra: z.string().nullable(),
   planoDeSaude: z.string().nullable(),
   sala: SalaResponseSchema.nullable().optional(),
-  paisResponsaveis: z.array(PaiResponsavelResponseSchema).nullable().optional(),
+  paisResponsaveis: z
+    .array(UsuarioSchema.partial())
+    .optional()
+    .nullable()
+    .transform((val) => val || []),
   intoleranciasAlimentares: z.array(IntoleranciaResponseSchema).nullable().optional(),
   medicamentos: z.array(MedicamentoResponseSchema).nullable().optional(),
   fotoOriginalUrl: z.string().nullable(),
   fotoThumbnailUrl: z.string().nullable(),
+  nomeCompleto: z.string(),
 });
 
 export type EstudanteResponse = z.infer<typeof EstudanteResponseSchema>;

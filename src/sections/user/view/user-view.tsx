@@ -1,16 +1,17 @@
-import type { AlertColor } from '@mui/material';
+import type { ChipProps, AlertColor } from '@mui/material';
 import type { UsuarioResponse, PagedUsuarioResponse } from 'src/models/user/usuario-response';
 import type {
   GridSlots,
   GridColDef,
   GridSortModel,
-  GridPaginationModel,
   GridFilterModel,
+  GridPaginationModel,
 } from '@mui/x-data-grid';
 
 import { useState, useEffect, useCallback } from 'react';
 
 import Button from '@mui/material/Button';
+import { Chip, Switch } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import { ptBR } from '@mui/x-data-grid/locales';
@@ -27,7 +28,7 @@ import { remover } from 'src/services/common-service';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { UserFormDialog } from 'src/forms/user/user-form';
 import { USER_TYPES } from 'src/constants/user-constants';
-import { getUsuarios } from 'src/services/usuario-service';
+import { getUsuarios, updateStatus } from 'src/services/usuario-service';
 
 import DialogDelete from 'src/components/dialog/dialog-delete';
 import { DefaultSnackBar } from 'src/components/snackbar/default-snackbar';
@@ -74,15 +75,26 @@ export function UserView() {
     setOpenModalDelete(true);
   };
 
+  const handleStatusChange = async (id: string, novoStatus: boolean) => {
+    updateStatus(id, novoStatus).then(() => getData());
+  };
+
+  const chipColorMap: Record<string, ChipProps['color']> = {
+    Responsável: 'primary',
+    Professor: 'success',
+    Admin: 'warning',
+  };
+
   const columns: GridColDef<UsuarioResponse>[] = [
     {
       field: 'nome',
-      headerName: 'Nome',
+      headerName: 'Nome completo',
       flex: 1,
       minWidth: 150,
-      valueGetter: (value, row) => `${row.nome} ${row.sobrenome}`,
+      valueGetter: (value, row) => row.nomeCompleto,
     },
     { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
+    { field: 'telefoneCelular', headerName: 'Telefone/Celular', width: 150 },
     { field: 'cidade', headerName: 'Cidade', width: 150 },
     { field: 'estado', headerName: 'Estado', width: 150 },
     { field: 'endereco', headerName: 'Endereço', width: 200 },
@@ -95,6 +107,26 @@ export function UserView() {
       sortable: false,
       filterable: false,
       valueGetter: (value, row) => (row.tipo === 'Pai' ? 'Responsável' : row.tipo),
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={chipColorMap[params.value] || 'default'}
+          size="small"
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: 'ativo',
+      headerName: 'Status',
+      width: 100,
+      renderCell: (params) => (
+        <Switch
+          size="small"
+          checked={!!params.value}
+          onChange={(event) => handleStatusChange(params.row.id, event.target.checked)}
+        />
+      ),
     },
     {
       field: 'actions',
@@ -105,7 +137,7 @@ export function UserView() {
       getActions: ({ row }) => [
         <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleEdit(row)} />,
         <GridActionsCellItem
-          icon={<DeleteIcon />}
+          icon={<DeleteIcon color="error" />}
           label="Delete"
           onClick={() => handleDelete(row)}
         />,
@@ -121,7 +153,8 @@ export function UserView() {
       sortModel.length > 0 ? sortModel[0].field : '',
       sortModel.length > 0 ? sortModel[0].sort! : '',
       null,
-      filterModel?.items
+      filterModel?.items,
+      false
     )
       .then((r) => {
         setUsers(r.data ? r.data : ({} as PagedUsuarioResponse));
@@ -184,6 +217,8 @@ export function UserView() {
             columnVisibilityModel: {
               estado: false,
               numero: false,
+              endereco: false,
+              bairro: false,
             },
           },
         }}

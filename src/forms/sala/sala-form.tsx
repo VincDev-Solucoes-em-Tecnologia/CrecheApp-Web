@@ -1,4 +1,3 @@
-import type { AlertColor } from '@mui/material';
 import type { SalaResponse } from 'src/models/sala/sala-response';
 import type { UsuarioResponse } from 'src/models/user/usuario-response';
 
@@ -12,6 +11,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
+import { Chip, type AlertColor } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
@@ -60,7 +60,7 @@ export function SalaFormDialog({ open, onClose, currentData, onSuccess }: SalaFo
 
   useEffect(() => {
     if (open) {
-      getUsuarios(1, 100, 'nome', 'asc', 'Professor').then((r) =>
+      getUsuarios(1, 1000, 'nome', 'asc', 'Professor', null, false).then((r) =>
         setProfessores(r.data?.items || [])
       );
     }
@@ -158,11 +158,7 @@ export function SalaFormDialog({ open, onClose, currentData, onSuccess }: SalaFo
                 multiple
                 size="small"
                 options={professores}
-                getOptionLabel={(option) => {
-                  const nome = option.nome || '';
-                  const sobrenome = option.sobrenome || '';
-                  return `${nome} ${sobrenome}`.trim();
-                }}
+                getOptionLabel={(option) => option.nomeCompleto}
                 value={formik.values._professoresObj as UsuarioResponse[]}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 onChange={(_, newValue) => {
@@ -170,6 +166,33 @@ export function SalaFormDialog({ open, onClose, currentData, onSuccess }: SalaFo
                   formik.setFieldValue(
                     'professoresResponsaveis',
                     newValue.map((v) => v.id)
+                  );
+                }}
+                renderValue={(value, getTagProps) =>
+                  value.map((option, index) => {
+                    const { key, ...tagProps } = getTagProps({ index });
+                    return (
+                      <Chip
+                        size="small"
+                        key={key}
+                        label={option.nomeCompleto}
+                        {...tagProps}
+                        color={option.ativo ? 'default' : 'error'}
+                        variant="outlined"
+                      />
+                    );
+                  })
+                }
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <li
+                      key={key}
+                      {...optionProps}
+                      style={{ color: option.ativo ? 'inherit' : 'red' }}
+                    >
+                      {option.nomeCompleto} {option.ativo ? '' : '(Inativo)'}
+                    </li>
                   );
                 }}
                 renderInput={(params) => (
