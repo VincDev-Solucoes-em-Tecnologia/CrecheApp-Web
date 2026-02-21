@@ -118,7 +118,12 @@ export function EstudanteView() {
       renderCell: (params) => {
         const lista = params.row.paisResponsaveis || [];
         return (
-          <div style={{ whiteSpace: 'normal', lineHeight: '1.5em' }}>
+          <div
+            style={{
+              whiteSpace: 'normal',
+              lineHeight: '1.5em',
+            }}
+          >
             {lista.map((p, index) => (
               <span
                 key={p.id || index}
@@ -205,6 +210,7 @@ export function EstudanteView() {
         columns={columns}
         loading={isLoading}
         density="compact"
+        getRowHeight={() => 'auto'}
         paginationMode="server"
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}

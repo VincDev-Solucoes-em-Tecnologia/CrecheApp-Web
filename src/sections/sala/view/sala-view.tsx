@@ -166,6 +166,7 @@ export function SalaView() {
         columns={columns}
         loading={isLoading}
         density="compact"
+        getRowHeight={() => 'auto'}
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}
         pageSizeOptions={[5, 10, 25, 50]}
